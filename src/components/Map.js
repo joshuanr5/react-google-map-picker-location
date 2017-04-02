@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import '../index.css'
 
 const mapStyles = [
     {
@@ -23,7 +24,19 @@ const mapStyles = [
     }
 ];
 
+
 class Map extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            inputStyle: {
+                margin: '10px',
+                padding: '5px',
+                width: '20em'
+            }
+        }
+    }
+
 
     componentDidMount() {
         // console.log('component did mount')
@@ -64,13 +77,14 @@ class Map extends React.Component {
         })
     }
 
-    shouldComponentUpdate(nextProps) {
-        // console.log('should update', nextProps);
+    shouldComponentUpdate(nextProps, nextState) {
+        console.log('should update', nextProps);
         let mustRender = nextProps.mustRender;
         // console.log(JSON.stringify(this.props.getLocation()) === JSON.stringify(nextProps.getLocation()))
         // if(JSON.stringify(this.props.getLocation()) === JSON.stringify(nextProps.getLocation())) {
         //     mustRender = false;
         // }
+        if(JSON.stringify(this.state.inputStyle) !== JSON.stringify(nextState.inputStyle)) mustRender = true;
         return mustRender;
     }
 
@@ -87,7 +101,7 @@ class Map extends React.Component {
     loadSearchBox() {
         const { google } = this.props;
         const autocompleteNode = ReactDOM.findDOMNode(this.refs.autocomplete);
-        this.autocomplete = new google.maps.places.Autocomplete(autocompleteNode);
+        this.autocomplete = new google.maps.places.SearchBox(autocompleteNode);
         this.autocomplete.bindTo('bounds', this.map);
         this.map.controls[google.maps.ControlPosition.LEFT_TOP].push(autocompleteNode);
         this.marker = new google.maps.Marker({
@@ -105,11 +119,18 @@ class Map extends React.Component {
         const center = new this.props.google.maps.LatLng(lat, lng);
         this.marker.setPosition(center);
 
+        
 
-
-        google.maps.event.addListener(this.autocomplete, 'place_changed', (e) => {
-            const place = this.autocomplete.getPlace();
-            if (!place.geometry) return;
+        google.maps.event.addListener(this.autocomplete, 'places_changed', (e) => {
+            console.log(this.autocomplete.getBounds())
+            const places = this.autocomplete.getPlaces();
+            const place = places[0];
+            console.log(place);
+            if (!place) {
+                this.changeColor('red');
+                console.log('se puso rojo');
+                return;
+            };
 
             // if(place.geometry.viewport) {
             //     this.map.fitBounds(place.geometry.viewport);
@@ -128,6 +149,7 @@ class Map extends React.Component {
             this.marker.setPosition(place.geometry.location)
 
             this.props.onFind(place.geometry.location);
+            this.changeColor('#D3D3D3');
 
         });
 
@@ -136,18 +158,30 @@ class Map extends React.Component {
             this.props.onDragend(e.latLng);
         })
 
+
+    }
+    changeColor(color) {
+        this.setState({
+            inputStyle: {...this.state.inputStyle, border: `2px solid ${color}`}
+        })
+    }
+
+    hanleChange = () => {
+        
+        console.log(this.props.google.maps.places.SearchBox);
+        
     }
 
     render() {
-        // console.log('render map', this.map)
-        const style = {
+        console.log('render map', this.map)
+        const mapStyle = {
             width: '1222px',
             height: '1000px'
         }
 
         return (
-            <div ref="map" style={style}>
-                <input ref="autocomplete" type="text" style={{ margin: "10px", padding: "5px", width: "20em" }} />
+            <div ref="map" style={mapStyle} onClick={this.handleClick}>
+                <input className="pac-container" ref="autocomplete" type="text" style={this.state.inputStyle} onChange={this.hanleChange} />
             </div>
         )
     };
