@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import '../index.css'
+import './Map.css'
 
 const mapStyles = [
     {
@@ -40,7 +40,6 @@ class Map extends React.Component {
 
 
     componentDidMount() {
-        // console.log('component did mount')
 
         this.loadMap();
         this.loadSearchBox();
@@ -74,23 +73,18 @@ class Map extends React.Component {
         this.map = new maps.Map(nodeMap, mapConfig);
 
         this.map.addListener('click', (e) => {
-            // console.log('e', e.latLng.lat());
         })
     }
 
     shouldComponentUpdate(nextProps, nextState) {
-        // console.log('should update', nextProps);
         let mustRender = nextProps.mustRender;
-        // console.log(JSON.stringify(this.props.getLocation()) === JSON.stringify(nextProps.getLocation()))
-        // if(JSON.stringify(this.props.getLocation()) === JSON.stringify(nextProps.getLocation())) {
-        //     mustRender = false;
-        // }
-        if(JSON.stringify(this.state.inputStyle) !== JSON.stringify(nextState.inputStyle)) mustRender = true;
+        if(JSON.stringify(this.state.inputStyle) !== JSON.stringify(nextState.inputStyle)) {
+             mustRender = true;
+        }
         return mustRender;
     }
 
     componentWillUpdate(nextProps) {
-        // console.log('will update', this.props, nextProps);
         if (nextProps) {
             const { lat, lng } = nextProps.getLocation();
             if(lat === '' || lng === '') return;
@@ -113,6 +107,8 @@ class Map extends React.Component {
             // icon: 'http://maps.google.com/mapfiles/kml/paddle/wht-circle.png'
         });
 
+        console.log(this.marker)
+
          const { lat, lng } = {
             lat: '-12.054432177698004',
             lng: '-77.1039048501953'
@@ -126,27 +122,15 @@ class Map extends React.Component {
             if(this.timer) {
                 clearTimeout(this.timer);
             }
-            // console.log(this.autocomplete.getBounds())
             const places = this.autocomplete.getPlaces();
+            console.log(places);
             const place = places[0];
-            // console.log(place);
             if (!place) {
-                console.log('se puso rojo');
                 return;
             };
 
-            // if(place.geometry.viewport) {
-            //     this.map.fitBounds(place.geometry.viewport);
-            //     this.map.setZoom(18);
-            // }
             this.map.setCenter(place.geometry.location);
             this.map.setZoom(18);
-
-
-            // this.marker.setPlace({
-            //     placeId: place.place_id,
-            //     location: place.geometry.location
-            // });
 
 
             this.marker.setPosition(place.geometry.location)
@@ -156,12 +140,28 @@ class Map extends React.Component {
         });
 
         google.maps.event.addListener(this.marker, 'dragend', (e) => {
+            const latLng = e.latLng;
+            this.setAddress({lat: latLng.lat(), lng: latLng.lng()});
             this.map.setCenter(e.latLng);
             this.props.onDragend(e.latLng);
+            
         })
 
 
     }
+
+    setAddress(location) {
+        const geocoder = new this.props.google.maps.Geocoder;
+        geocoder.geocode({location}, (results, status) => {
+                console.log('asd')
+            
+            if(status === this.props.google.maps.GeocoderStatus.OK){
+                const addres = results[0].formatted_address;
+                this.refs.autocomplete.value = addres;
+            }
+        })
+    }
+
     changeColor(color) {
         this.setState({
             inputStyle: {...this.state.inputStyle, outlineColor: color}
@@ -185,7 +185,7 @@ class Map extends React.Component {
         const { google } = this.props;        
         let service = new google.maps.places.AutocompleteService();
         service.getPlacePredictions({input: value}, (prediction, status) => {
-            console.log(prediction)
+            console.log(prediction);
             if(status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
                 this.changeColor('red');
                 
@@ -196,7 +196,6 @@ class Map extends React.Component {
     }
 
     render() {
-        // console.log('render map', this.map)
         const mapStyle = {
             width: '1222px',
             height: '1000px'

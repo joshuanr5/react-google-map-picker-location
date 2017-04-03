@@ -61,6 +61,11 @@ class MapContainer extends React.Component {
             }
         });
     }
+
+    setAddress(location) {
+        
+        return location;
+    }
     
     handleDragend(location) {
         const lat = location.lat().toString();
@@ -90,6 +95,7 @@ class MapContainer extends React.Component {
         const { currentLocation } = this.state;
         return (
             <div>
+                {!this.props.loaded && 'loagind...'}
                 {this.props.loaded &&
                     <Map 
                         google={this.props.google} 
@@ -97,6 +103,7 @@ class MapContainer extends React.Component {
                         onDragend={this.handleDragend} 
                         mustRender={this.state.render} 
                         getLocation={this.getLocation.bind(null,currentLocation)}
+                        setAddress={this.setAddress.bind(null, this.props.google)}
                     />
                 }
                 <hr />

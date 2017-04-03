@@ -1,24 +1,6 @@
 body {
   margin: 0;
-  padding: 0;
+  padding: 1em;
   font-family: sans-serif;
 }
 
-.pac-container:after {
-    /* Disclaimer: not needed to show 'powered by Google' if also a Google Map is shown */
-
-    background-image: none !important;
-    height: 0px;
-}
-
-.pac-item {
-  font-size: x-large
-}
-
-.pac-item-query {
-  font-size: x-large;
-  margin-right: 5px
-}
-.search-box:focus {
-  outline-color: black
-}
