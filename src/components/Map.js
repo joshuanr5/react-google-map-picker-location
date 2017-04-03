@@ -32,7 +32,8 @@ class Map extends React.Component {
             inputStyle: {
                 margin: '10px',
                 padding: '5px',
-                width: '20em'
+                width: '30em',
+                fontSize: 'x-large' 
             }
         }
     }
@@ -78,7 +79,7 @@ class Map extends React.Component {
     }
 
     shouldComponentUpdate(nextProps, nextState) {
-        console.log('should update', nextProps);
+        // console.log('should update', nextProps);
         let mustRender = nextProps.mustRender;
         // console.log(JSON.stringify(this.props.getLocation()) === JSON.stringify(nextProps.getLocation()))
         // if(JSON.stringify(this.props.getLocation()) === JSON.stringify(nextProps.getLocation())) {
@@ -122,12 +123,14 @@ class Map extends React.Component {
         
 
         google.maps.event.addListener(this.autocomplete, 'places_changed', (e) => {
-            console.log(this.autocomplete.getBounds())
+            if(this.timer) {
+                clearTimeout(this.timer);
+            }
+            // console.log(this.autocomplete.getBounds())
             const places = this.autocomplete.getPlaces();
             const place = places[0];
-            console.log(place);
+            // console.log(place);
             if (!place) {
-                this.changeColor('red');
                 console.log('se puso rojo');
                 return;
             };
@@ -149,7 +152,6 @@ class Map extends React.Component {
             this.marker.setPosition(place.geometry.location)
 
             this.props.onFind(place.geometry.location);
-            this.changeColor('#D3D3D3');
 
         });
 
@@ -162,18 +164,39 @@ class Map extends React.Component {
     }
     changeColor(color) {
         this.setState({
-            inputStyle: {...this.state.inputStyle, border: `2px solid ${color}`}
+            inputStyle: {...this.state.inputStyle, outlineColor: color}
         })
     }
 
-    hanleChange = () => {
-        
-        console.log(this.props.google.maps.places.SearchBox);
-        
+    hanleChange = (e) => {
+        const value =  e.target.value;
+        if(value === '') return;
+
+        if(this.timer) {
+            clearTimeout(this.timer);
+        }
+
+        this.timer = setTimeout(() => {
+            this.functionTimer(value);
+        },500);
+    }
+
+    functionTimer(value) {
+        const { google } = this.props;        
+        let service = new google.maps.places.AutocompleteService();
+        service.getPlacePredictions({input: value}, (prediction, status) => {
+            console.log(prediction)
+            if(status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+                this.changeColor('red');
+                
+            }else{
+                this.changeColor('black');
+            }
+        });
     }
 
     render() {
-        console.log('render map', this.map)
+        // console.log('render map', this.map)
         const mapStyle = {
             width: '1222px',
             height: '1000px'
@@ -181,7 +204,7 @@ class Map extends React.Component {
 
         return (
             <div ref="map" style={mapStyle} onClick={this.handleClick}>
-                <input className="pac-container" ref="autocomplete" type="text" style={this.state.inputStyle} onChange={this.hanleChange} />
+                <input className="search-box" ref="autocomplete" type="text" style={this.state.inputStyle} placeholder="Escriba el lugar a buscar" onChange={this.hanleChange} />
             </div>
         )
     };

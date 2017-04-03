@@ -10,3 +10,15 @@ body {
     background-image: none !important;
     height: 0px;
 }
+
+.pac-item {
+  font-size: x-large
+}
+
+.pac-item-query {
+  font-size: x-large;
+  margin-right: 5px
+}
+.search-box:focus {
+  outline-color: black
+}
