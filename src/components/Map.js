@@ -33,7 +33,7 @@ class Map extends React.Component {
                 margin: '10px',
                 padding: '5px',
                 width: '30em',
-                fontSize: 'x-large' 
+                fontSize: 'x-large'
             }
         }
     }
@@ -78,8 +78,8 @@ class Map extends React.Component {
 
     shouldComponentUpdate(nextProps, nextState) {
         let mustRender = nextProps.mustRender;
-        if(JSON.stringify(this.state.inputStyle) !== JSON.stringify(nextState.inputStyle)) {
-             mustRender = true;
+        if (JSON.stringify(this.state.inputStyle) !== JSON.stringify(nextState.inputStyle)) {
+            mustRender = true;
         }
         return mustRender;
     }
@@ -87,7 +87,7 @@ class Map extends React.Component {
     componentWillUpdate(nextProps) {
         if (nextProps) {
             const { lat, lng } = nextProps.getLocation();
-            if(lat === '' || lng === '') return;
+            if (lat === '' || lng === '') return;
             const center = new this.props.google.maps.LatLng(lat, lng);
             this.map.setCenter(center);
             this.marker.setPosition(center);
@@ -102,24 +102,30 @@ class Map extends React.Component {
         this.marker = new google.maps.Marker({
             map: this.map,
             draggable: true,
-            // icon: 'http://maps.google.com/mapfiles/kml/paddle/stop.png'
-            icon: 'http://maps.google.com/mapfiles/kml/pushpin/red-pushpin.png'
+            icon: 'http://maps.google.com/mapfiles/kml/paddle/stop.png'
+            // icon: 'http://maps.google.com/mapfiles/kml/pushpin/red-pushpin.png'
             // icon: 'http://maps.google.com/mapfiles/kml/paddle/wht-circle.png'
         });
 
-        console.log(this.marker)
 
-         const { lat, lng } = {
+        const { lat, lng } = {
             lat: '-12.054432177698004',
             lng: '-77.1039048501953'
         }
         const center = new this.props.google.maps.LatLng(lat, lng);
         this.marker.setPosition(center);
+        this.circle = new this.props.google.maps.Circle({
+            map: this.map,
+            radius: 100,
+            fillCOlor: '#FF0000',
+            fillOpacity: 0.2
+        });
+        this.circle.setCenter(center);
 
-        
+
 
         google.maps.event.addListener(this.autocomplete, 'places_changed', (e) => {
-            if(this.timer) {
+            if (this.timer) {
                 clearTimeout(this.timer);
             }
             const places = this.autocomplete.getPlaces();
@@ -130,66 +136,101 @@ class Map extends React.Component {
             };
 
             this.map.setCenter(place.geometry.location);
-            this.map.setZoom(18);
+            this.map.setZoom(19);
+
+            // if(!this.circle) {
+            //     this.circle = new this.props.google.maps.Circle({
+            //         map: this.map,
+            //         radius: 100,
+            //         fillCOlor: '#FF0000',
+            //         fillOpacity: 0.2
+            //     });
+            // }
+
+            this.circle.setCenter(place.geometry.location);
+            
 
 
             this.marker.setPosition(place.geometry.location)
 
             this.props.onFind(place.geometry.location);
 
+            this.props.getAddress(this.refs.autocomplete.value);
+
         });
 
         google.maps.event.addListener(this.marker, 'dragend', (e) => {
             const latLng = e.latLng;
-            this.setAddress({lat: latLng.lat(), lng: latLng.lng()});
-            this.map.setCenter(e.latLng);
-            this.props.onDragend(e.latLng);
+            const lastLocation = this.circle.getCenter();
+
+            // if(!this.circle) {
+            //     this.circle = new this.props.google.maps.Circle({
+            //         map: this.map,
+            //         radius: 100,
+            //         fillCOlor: '#AA0000'
+            //     });
+            //     this.circle.setCenter(latLng);
+            // }
+            // this.circle.bindTo('center', this.marker, 'position');
+
+            const distance = this.props.google.maps.geometry.spherical.computeDistanceBetween(lastLocation, latLng);
+            if(distance > 100){
+                this.circle.setCenter(latLng);
+                this.setAddress({ lat: latLng.lat(), lng: latLng.lng() });
+                
+            }
+            this.map.setCenter(latLng);            
+
             
+            this.props.onDragend(latLng);
+
         })
 
 
     }
 
     setAddress(location) {
-        const geocoder = new this.props.google.maps.Geocoder;
-        geocoder.geocode({location}, (results, status) => {
-                console.log('asd')
-            
-            if(status === this.props.google.maps.GeocoderStatus.OK){
-                const addres = results[0].formatted_address;
-                this.refs.autocomplete.value = addres;
+        const { google } = this.props;
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ location }, (results, status) => {
+            console.log(results[0])
+            if (status === this.props.google.maps.GeocoderStatus.OK) {
+                const address = results[0].formatted_address;
+                this.refs.autocomplete.value = address;
+                this.props.getAddress(address);
+                
             }
         })
     }
 
     changeColor(color) {
         this.setState({
-            inputStyle: {...this.state.inputStyle, outlineColor: color}
+            inputStyle: { ...this.state.inputStyle, outlineColor: color }
         })
     }
 
     hanleChange = (e) => {
-        const value =  e.target.value;
-        if(value === '') return;
+        const value = e.target.value;
+        if (value === '') return;
 
-        if(this.timer) {
+        if (this.timer) {
             clearTimeout(this.timer);
         }
 
         this.timer = setTimeout(() => {
             this.functionTimer(value);
-        },500);
+        }, 500);
     }
 
     functionTimer(value) {
-        const { google } = this.props;        
+        const { google } = this.props;
         let service = new google.maps.places.AutocompleteService();
-        service.getPlacePredictions({input: value}, (prediction, status) => {
+        service.getPlacePredictions({ input: value }, (prediction, status) => {
             console.log(prediction);
-            if(status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+            if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
                 this.changeColor('red');
-                
-            }else{
+
+            } else {
                 this.changeColor('black');
             }
         });
