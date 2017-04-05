@@ -23,6 +23,8 @@ class MapContainer extends React.Component {
         this.handleBlur = this.handleBlur.bind(this);
         this.handleSave = this.handleSave.bind(this);
         this.getAddress = this.getAddress.bind(this);
+        this.handleShowClick = this.handleShowClick.bind(this);
+        this.changeRender = this.changeRender.bind(this);
     }
 
     handleLatChange(e) {
@@ -79,34 +81,55 @@ class MapContainer extends React.Component {
     }
 
     handleBlur(e) {
-        // console.log('poniendo render a true')
         this.setState({
             render: true
         })
     }
 
-    getLocation(location) {
-        return location;
+    getLocation(location, address) {
+        return {location, address};
     }
+
     handleSave() {
         const { lat, lng } = this.state.currentLocation;
         const address = this.state.currentAddress;
         const id = this.state.locals.length + 1;
+
         if(address === '') return;
+
         this.setState({
             locals: [...this.state.locals, {id, address, lat, lng}]
-        })
-        console.log(lat,lng, address, id)
+        });
     }
+
     getAddress(address) {
         this.setState({
             currentAddress: address
+        });
+    }
+
+    handleShowClick(local) {
+        const {address, lat, lng} = local;
+
+        this.setState({
+            render: true,
+            currentAddress: address,
+            currentLocation: {
+                lat,
+                lng
+            }
+        });
+    }
+
+    changeRender() {
+        this.setState({
+            render: false
         })
     }
 
     render() {
-        // console.log('render mapcon', this.props, this.state);
         const { currentLocation } = this.state;
+
         return (
             <div>
                 {!this.props.loaded && 'loagind...'}
@@ -116,9 +139,9 @@ class MapContainer extends React.Component {
                         onFind={this.handleFind}
                         onDragend={this.handleDragend}
                         mustRender={this.state.render}
-                        getLocation={this.getLocation.bind(null, currentLocation)}
+                        getLocation={this.getLocation.bind(null, currentLocation, this.state.currentAddress)}
                         getAddress={this.getAddress}
-
+                        changeRender={this.changeRender}
                     />
                 }
                 <hr />
@@ -139,9 +162,8 @@ class MapContainer extends React.Component {
                     onBlur={this.handleBlur}
                 />
                 <button style={{marginLeft: '53em'}} onClick={this.handleSave}>Save local</button>
-
                 <hr/>
-                <LocalList locals={this.state.locals} />
+                <LocalList locals={this.state.locals} onShowClick={this.handleShowClick} />
             </div>
         );
     }
